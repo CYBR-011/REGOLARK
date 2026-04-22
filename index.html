@@ -8,8 +8,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{width:100%;height:100%;overflow:hidden}
-body{background:#07070a;font-family:'Share Tech Mono',monospace;display:flex;flex-direction:column;}
+html{width:100%;height:100%;}
+body{
+  background:#07070a;font-family:'Share Tech Mono',monospace;
+  display:flex;flex-direction:column;
+  min-height:100%;
+  overflow-x:hidden;
+  overflow-y:auto;
+}
 body::before{
   content:'';position:fixed;inset:0;
   background:
@@ -76,11 +82,28 @@ nav a:hover{background:rgba(255,255,255,.04);letter-spacing:5px;filter:brightnes
   line-height:1;transition:color .25s,text-shadow .25s;white-space:nowrap;
 }
 
-.layout{flex:1;display:flex;align-items:center;position:relative;z-index:1;overflow:hidden;}
+.layout{flex:1;min-height:260px;display:flex;align-items:center;position:relative;z-index:1;}
 .chibi{position:fixed;cursor:grab;user-select:none;z-index:20;transform-style:preserve-3d;will-change:transform;filter:drop-shadow(0 8px 24px rgba(0,180,220,0.2));}
 .chibi:active{cursor:grabbing;}
 .chibi canvas{display:block;pointer-events:none;}
 #arrowCanvas{position:fixed;inset:0;pointer-events:none;z-index:50;}
+
+/* ── MOBILE RESPONSIVE ── */
+@media(max-width:600px){
+  .logo{font-size:min(4.5rem,18vw);letter-spacing:6px;margin-bottom:6px;}
+  nav{gap:4px 8px;padding:8px 10px 8px;}
+  nav a{font-size:1.4rem;letter-spacing:2px;padding:2px 7px;}
+  .apps{gap:10px 14px;padding:8px 10px;}
+  .app-icon{width:40px;height:40px;border-radius:10px;}
+  .app-label{font-size:.85rem;letter-spacing:1px;}
+  .layout{min-height:200px;}
+}
+@media(max-width:380px){
+  .logo{font-size:min(3.5rem,16vw);letter-spacing:4px;}
+  nav a{font-size:1.1rem;letter-spacing:1px;padding:1px 5px;}
+  .app-icon{width:34px;height:34px;border-radius:8px;}
+  .app-label{font-size:.75rem;}
+}
 
 
 
@@ -165,9 +188,7 @@ const B64="/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtb
 function loadChar(canvas,mirror){
   const img=new Image();
   img.onload=()=>{
-    const isMobile=window.innerWidth<=600;
-    const maxW=isMobile?130:220;
-    const maxH=Math.round(window.innerHeight*(isMobile?0.38:0.55));
+    const maxW=220,maxH=Math.round(window.innerHeight*0.62);
     const scale=Math.min(maxW/img.width,maxH/img.height);
     canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);
     const ctx=canvas.getContext("2d");
@@ -182,17 +203,11 @@ function loadChar(canvas,mirror){
 loadChar(document.getElementById("cvL"),true);
 loadChar(document.getElementById("cvR"),false);
 
-// set initial positions responsively
 (function positionChibis(){
-  const m=window.innerWidth<=600;
-  const gap=m?8:60;
-  const bot=m?40:80;
   const elL=document.getElementById("chibiL");
   const elR=document.getElementById("chibiR");
-  elL.style.left=gap+"px";
-  elL.style.bottom=bot+"px";
-  elR.style.right=gap+"px";
-  elR.style.bottom=bot+"px";
+  elL.style.left="60px";elL.style.bottom="80px";
+  elR.style.right="60px";elR.style.bottom="80px";
 })();
 
 let rawMx=window.innerWidth/2,rawMy=window.innerHeight/2,smMx=rawMx,smMy=rawMy;
@@ -206,13 +221,21 @@ function makeDraggable(el){
     const r=el.getBoundingClientRect();
     ox=cx-r.left;oy=cy-r.top;
     el.style.cursor="grabbing";
-    // always convert to top/left positioning so it stays after drop
     el.style.left=r.left+"px";
     el.style.top=r.top+"px";
     el.style.right="";
     el.style.bottom="";
   }
-  function move(cx,cy){if(!dragging)return;el.style.left=(cx-ox)+"px";el.style.top=(cy-oy)+"px";}
+  function move(cx,cy){
+    if(!dragging)return;
+    const r=el.getBoundingClientRect();
+    const W=window.innerWidth,H=window.innerHeight;
+    // clamp so chibi never leaves screen
+    const nx=Math.max(0,Math.min(W-r.width, cx-ox));
+    const ny=Math.max(0,Math.min(H-r.height,cy-oy));
+    el.style.left=nx+"px";
+    el.style.top=ny+"px";
+  }
   function end(){dragging=false;el.style.cursor="grab";}
   el.addEventListener("mousedown",e=>{e.preventDefault();start(e.clientX,e.clientY);});
   window.addEventListener("mousemove",e=>move(e.clientX,e.clientY));
@@ -224,21 +247,22 @@ function makeDraggable(el){
 makeDraggable(document.getElementById("chibiL"));
 makeDraggable(document.getElementById("chibiR"));
 
-const aimState={chibiL:{angle:0,bob:0},chibiR:{angle:0,bob:0}};
+const aimState={chibiL:{lean:0,bob:0},chibiR:{lean:0,bob:0}};
 
 function updateAim(ts){
   smMx+=(rawMx-smMx)*0.12;smMy+=(rawMy-smMy)*0.12;
-  const bob=Math.sin(ts/1500*Math.PI)*8;
+  const bob=Math.sin(ts/1500*Math.PI)*6;
   ["chibiL","chibiR"].forEach(id=>{
-    const el=document.getElementById(id);const r=el.getBoundingClientRect();
-    const cx=r.left+r.width/2,cy=r.top+r.height/2;
-    const dx=smMx-cx,dy=smMy-cy;
-    // full 360: angle to cursor in degrees
-    // cvL naturally faces RIGHT (0deg), cvR naturally faces LEFT (180deg offset)
-    const baseAngle=id==="chibiR"?180:0;
-    const angle=(Math.atan2(dy,dx)*(180/Math.PI))-baseAngle;
-    aimState[id]={angle,bob};
-    el.style.transform=`rotate(${angle}deg) translateY(${bob}px)`;
+    const el=document.getElementById(id);
+    const r=el.getBoundingClientRect();
+    const cx=r.left+r.width/2, cy=r.top+r.height/2;
+    const angleDeg=Math.atan2(smMy-cy, smMx-cx)*(180/Math.PI);
+    // cvL mirror=true  → naturally faces RIGHT → rotate(angleDeg) points bow at cursor
+    // cvR mirror=false → naturally faces LEFT  → rotate(180-angleDeg) points bow at cursor
+    const finalAngle = id==="chibiL" ? angleDeg : (180-angleDeg);
+    aimState[id]={lean:finalAngle,bob};
+    // separate bob from rotation so it always goes up/down regardless of rotation
+    el.style.transform=`translateY(${bob}px) rotate(${finalAngle}deg)`;
   });
   requestAnimationFrame(updateAim);
 }
@@ -249,11 +273,12 @@ function resize(){ac.width=window.innerWidth;ac.height=window.innerHeight;}
 resize();window.addEventListener("resize",resize);
 
 function bowTip(id){
-  const el=document.getElementById(id);const r=el.getBoundingClientRect();
-  const cx=r.left+r.width/2,cy=r.top+r.height/2;
-  // arrow fires at the exact angle toward cursor
-  const angle=Math.atan2(smMy-cy,smMx-cx);
-  const reach=r.width*0.44;
+  const el=document.getElementById(id);
+  const r=el.getBoundingClientRect();
+  const cx=r.left+r.width/2, cy=r.top+r.height/2;
+  // fire from exact direction chibi is pointing = toward cursor
+  const angle=Math.atan2(smMy-cy, smMx-cx);
+  const reach=r.width*0.38;
   return{x:cx+Math.cos(angle)*reach, y:cy+Math.sin(angle)*reach};
 }
 
