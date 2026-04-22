@@ -249,6 +249,24 @@ makeDraggable(document.getElementById("chibiR"));
 
 const aimState={chibiL:{lean:0,bob:0},chibiR:{lean:0,bob:0}};
 
+// clamp both chibis inside screen bounds (call on resize/orientation change)
+function clampChibis(){
+  const W=window.innerWidth,H=window.innerHeight;
+  ["chibiL","chibiR"].forEach(id=>{
+    const el=document.getElementById(id);
+    const r=el.getBoundingClientRect();
+    // convert to top/left if still bottom/right anchored
+    let left=parseFloat(el.style.left)||r.left;
+    let top=parseFloat(el.style.top)||r.top;
+    if(el.style.right){left=W-r.width-parseFloat(el.style.right);el.style.right="";}
+    if(el.style.bottom){top=H-r.height-parseFloat(el.style.bottom);el.style.bottom="";}
+    el.style.left=Math.max(0,Math.min(W-r.width,left))+"px";
+    el.style.top=Math.max(0,Math.min(H-r.height,top))+"px";
+  });
+}
+window.addEventListener("resize",clampChibis);
+window.addEventListener("orientationchange",()=>setTimeout(clampChibis,300));
+
 function updateAim(ts){
   smMx+=(rawMx-smMx)*0.12;smMy+=(rawMy-smMy)*0.12;
   const bob=Math.sin(ts/1500*Math.PI)*6;
@@ -256,12 +274,11 @@ function updateAim(ts){
     const el=document.getElementById(id);
     const r=el.getBoundingClientRect();
     const cx=r.left+r.width/2, cy=r.top+r.height/2;
-    const angleDeg=Math.atan2(smMy-cy, smMx-cx)*(180/Math.PI);
-    // cvL mirror=true  → naturally faces RIGHT → rotate(angleDeg) points bow at cursor
-    // cvR mirror=false → naturally faces LEFT  → rotate(180-angleDeg) points bow at cursor
-    const finalAngle = id==="chibiL" ? angleDeg : (180-angleDeg);
+    const rawAngle=Math.atan2(smMy-cy, smMx-cx)*(180/Math.PI);
+    // cvL loaded mirror=true  → naturally faces RIGHT → rotate(rawAngle) points bow toward cursor ✓
+    // cvR loaded mirror=false → naturally faces LEFT  → needs +180 so it faces cursor correctly
+    const finalAngle=id==="chibiL" ? rawAngle : rawAngle+180;
     aimState[id]={lean:finalAngle,bob};
-    // separate bob from rotation so it always goes up/down regardless of rotation
     el.style.transform=`translateY(${bob}px) rotate(${finalAngle}deg)`;
   });
   requestAnimationFrame(updateAim);
