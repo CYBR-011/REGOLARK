@@ -85,6 +85,22 @@ nav a:hover{background:rgba(255,255,255,.04);letter-spacing:5px;filter:brightnes
 
 
 footer{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);font-size:.55rem;letter-spacing:3px;color:rgba(255,255,255,.08);text-transform:uppercase;z-index:10;}
+
+/* ── RESPONSIVE MOBILE ── */
+@media(max-width:600px){
+  .logo{font-size:min(4.5rem,16vw);letter-spacing:6px;margin-bottom:6px;}
+  nav{gap:4px 8px;padding:6px 10px 8px;}
+  nav a{font-size:1.4rem;letter-spacing:1px;padding:1px 7px;}
+  .apps{gap:10px 14px;padding:8px 10px;}
+  .app-icon{width:40px;height:40px;border-radius:10px;}
+  .app-label{font-size:.85rem;letter-spacing:1px;}
+  .chibi canvas{max-width:130px !important;max-height:38vh !important;}
+}
+@media(max-width:380px){
+  .logo{font-size:min(3.5rem,14vw);letter-spacing:4px;}
+  nav a{font-size:1.2rem;}
+  .app-icon{width:34px;height:34px;}
+}
 </style>
 </head>
 <body>
@@ -138,8 +154,8 @@ footer{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);font-size:.
 
 <div class="layout"></div>
 
-<div class="chibi" id="chibiL" style="left:60px;bottom:80px;"><canvas id="cvL"></canvas></div>
-<div class="chibi" id="chibiR" style="right:60px;bottom:80px;"><canvas id="cvR"></canvas></div>
+<div class="chibi" id="chibiL"><canvas id="cvL"></canvas></div>
+<div class="chibi" id="chibiR"><canvas id="cvR"></canvas></div>
 
 <canvas id="arrowCanvas"></canvas>
 <footer>&copy; 2026 regolark</footer>
@@ -149,7 +165,9 @@ const B64="/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtb
 function loadChar(canvas,mirror){
   const img=new Image();
   img.onload=()=>{
-    const maxW=220,maxH=Math.round(window.innerHeight*0.55);
+    const isMobile=window.innerWidth<=600;
+    const maxW=isMobile?130:220;
+    const maxH=Math.round(window.innerHeight*(isMobile?0.38:0.55));
     const scale=Math.min(maxW/img.width,maxH/img.height);
     canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);
     const ctx=canvas.getContext("2d");
@@ -163,6 +181,19 @@ function loadChar(canvas,mirror){
 }
 loadChar(document.getElementById("cvL"),true);
 loadChar(document.getElementById("cvR"),false);
+
+// set initial positions responsively
+(function positionChibis(){
+  const m=window.innerWidth<=600;
+  const gap=m?8:60;
+  const bot=m?40:80;
+  const elL=document.getElementById("chibiL");
+  const elR=document.getElementById("chibiR");
+  elL.style.left=gap+"px";
+  elL.style.bottom=bot+"px";
+  elR.style.right=gap+"px";
+  elR.style.bottom=bot+"px";
+})();
 
 let rawMx=window.innerWidth/2,rawMy=window.innerHeight/2,smMx=rawMx,smMy=rawMy;
 document.addEventListener("mousemove",e=>{rawMx=e.clientX;rawMy=e.clientY;});
