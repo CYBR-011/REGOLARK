@@ -10,7 +10,7 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{width:100%;height:100%;}
 body{
-  background:#07070a;font-family:'Share Tech Mono',monospace;
+  background:#00000a;font-family:'Share Tech Mono',monospace;
   display:flex;flex-direction:column;
   min-height:100%;
   overflow-x:hidden;
@@ -24,7 +24,7 @@ body::before{
     radial-gradient(ellipse at 50% 90%,rgba(0,140,80,0.04) 0%,transparent 50%);
   pointer-events:none;z-index:0;
 }
-header{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;flex-shrink:0;padding-top:18px;}
+header{position:relative;z-index:1;position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;flex-shrink:0;padding-top:18px;}
 .logo{
   font-family:'VT323',monospace;font-size:min(7rem,12vw);letter-spacing:12px;text-transform:uppercase;
   background:linear-gradient(90deg,#00f3ff 0%,#bf80ff 50%,#ff00ea 100%);
@@ -45,12 +45,13 @@ nav a{
 }
 nav a:nth-child(1){color:#00c8d4;border-color:rgba(0,200,212,.3);text-shadow:0 0 8px rgba(0,200,212,.7),0 0 20px rgba(0,200,212,.3)}
 nav a:nth-child(2){color:#00c8d4;border-color:rgba(0,200,212,.3);text-shadow:0 0 8px rgba(0,200,212,.7),0 0 20px rgba(0,200,212,.3)}
-nav a:nth-child(3){color:#c8a800;border-color:rgba(200,168,0,.3);text-shadow:0 0 8px rgba(200,168,0,.7),0 0 20px rgba(200,168,0,.3)}
+nav a:nth-child(3){color:#00c8d4;border-color:rgba(0,200,212,.3);text-shadow:0 0 8px rgba(0,200,212,.7),0 0 20px rgba(0,200,212,.3)}
 nav a:nth-child(4){color:#c8a800;border-color:rgba(200,168,0,.3);text-shadow:0 0 8px rgba(200,168,0,.7),0 0 20px rgba(200,168,0,.3)}
 nav a:nth-child(5){color:#c8a800;border-color:rgba(200,168,0,.3);text-shadow:0 0 8px rgba(200,168,0,.7),0 0 20px rgba(200,168,0,.3)}
-nav a:nth-child(6){color:#00a854;border-color:rgba(0,168,84,.3);text-shadow:0 0 8px rgba(0,168,84,.7),0 0 20px rgba(0,168,84,.3)}
-nav a:nth-child(7){color:#8a40d4;border-color:rgba(138,64,212,.3);text-shadow:0 0 8px rgba(138,64,212,.7),0 0 20px rgba(138,64,212,.3)}
-nav a:nth-child(8){color:#c42020;border-color:rgba(196,32,32,.3);text-shadow:0 0 8px rgba(196,32,32,.7),0 0 20px rgba(196,32,32,.3)}
+nav a:nth-child(6){color:#c8a800;border-color:rgba(200,168,0,.3);text-shadow:0 0 8px rgba(200,168,0,.7),0 0 20px rgba(200,168,0,.3)}
+nav a:nth-child(7){color:#00a854;border-color:rgba(0,168,84,.3);text-shadow:0 0 8px rgba(0,168,84,.7),0 0 20px rgba(0,168,84,.3)}
+nav a:nth-child(8){color:#8a40d4;border-color:rgba(138,64,212,.3);text-shadow:0 0 8px rgba(138,64,212,.7),0 0 20px rgba(138,64,212,.3)}
+nav a:nth-child(9){color:#c42020;border-color:rgba(196,32,32,.3);text-shadow:0 0 8px rgba(196,32,32,.7),0 0 20px rgba(196,32,32,.3)}
 nav a:hover{background:rgba(255,255,255,.04);letter-spacing:5px;filter:brightness(1.6);opacity:1;}
 
 /* app strip */
@@ -127,10 +128,167 @@ footer{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);font-size:.
 </style>
 </head>
 <body>
+<canvas id="galaxyBg" style="position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;"></canvas>
+<script>
+(function(){
+  const c=document.getElementById('galaxyBg');
+  const ctx=c.getContext('2d');
+  let W,H,stars=[],nebulae=[],dustClouds=[];
+
+  function rand(a,b){return a+Math.random()*(b-a);}
+
+  function resize(){
+    W=c.width=window.innerWidth;
+    H=c.height=window.innerHeight;
+    init();
+    draw();
+  }
+
+  function init(){
+    stars=[];nebulae=[];dustClouds=[];
+    // --- Stars (4 layers with parallax speeds) ---
+    for(let i=0;i<1800;i++) stars.push({x:rand(0,W),y:rand(0,H),r:rand(0.2,0.6),a:rand(0.3,0.8),tw:rand(0.002,0.008),tp:rand(0,Math.PI*2),color:'#ffffff',sp:rand(0.02,0.06)});
+    for(let i=0;i<900;i++) stars.push({x:rand(0,W),y:rand(0,H),r:rand(0.5,1.2),a:rand(0.4,1.0),tw:rand(0.003,0.01),tp:rand(0,Math.PI*2),color:`hsl(${rand(180,260)},60%,90%)`,sp:rand(0.06,0.14)});
+    for(let i=0;i<300;i++) stars.push({x:rand(0,W),y:rand(0,H),r:rand(1.0,2.2),a:rand(0.5,1.0),tw:rand(0.004,0.012),tp:rand(0,Math.PI*2),color:`hsl(${rand(200,280)},70%,95%)`,sp:rand(0.14,0.25)});
+    for(let i=0;i<60;i++){
+      const hue=Math.random()<0.5?rand(200,240):rand(40,60);
+      stars.push({x:rand(0,W),y:rand(0,H),r:rand(2.0,3.5),a:rand(0.7,1.0),tw:rand(0.005,0.015),tp:rand(0,Math.PI*2),color:`hsl(${hue},80%,98%)`,glow:true,sp:rand(0.25,0.4)});
+    }
+
+    // --- Nebula blobs ---
+    const nebColors=[
+      [200,120,255],[100,160,255],[255,100,180],[80,220,200],[160,80,255],[255,160,80]
+    ];
+    for(let i=0;i<18;i++){
+      const col=nebColors[Math.floor(rand(0,nebColors.length))];
+      nebulae.push({
+        x:rand(0,W*2), y:rand(-H*0.1,H*1.1),
+        rx:rand(W*0.12,W*0.38), ry:rand(H*0.10,H*0.30),
+        a:rand(0.025,0.065),
+        col:col, rot:rand(0,Math.PI),
+        sp:rand(0.003,0.012), dy:rand(-0.008,0.008)
+      });
+    }
+    // --- Dust clouds ---
+    for(let i=0;i<8;i++){
+      dustClouds.push({x:rand(W*0.2,W*2),y:rand(0,H),rx:rand(W*0.08,W*0.20),ry:rand(H*0.06,H*0.15),a:rand(0.04,0.10),rot:rand(0,Math.PI),sp:rand(0.005,0.015),dy:rand(-0.005,0.005)});
+    }
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+
+    // Deep space base
+    const bg=ctx.createRadialGradient(W*0.5,H*0.5,0,W*0.5,H*0.5,Math.max(W,H)*0.75);
+    bg.addColorStop(0,'#0a0515');
+    bg.addColorStop(0.4,'#050210');
+    bg.addColorStop(1,'#00000a');
+    ctx.fillStyle=bg;
+    ctx.fillRect(0,0,W,H);
+
+    // Milky Way band
+    const band=ctx.createLinearGradient(0,H*0.2,W,H*0.8);
+    band.addColorStop(0,'rgba(60,30,120,0)');
+    band.addColorStop(0.3,'rgba(80,50,160,0.07)');
+    band.addColorStop(0.5,'rgba(120,80,200,0.12)');
+    band.addColorStop(0.7,'rgba(80,50,160,0.07)');
+    band.addColorStop(1,'rgba(60,30,120,0)');
+    ctx.fillStyle=band;
+    ctx.fillRect(0,0,W,H);
+
+    // Nebulae
+    nebulae.forEach(n=>{
+      ctx.save();
+      ctx.translate(n.x,n.y);
+      ctx.rotate(n.rot);
+      const g=ctx.createRadialGradient(0,0,0,0,0,Math.max(n.rx,n.ry));
+      g.addColorStop(0,`rgba(${n.col[0]},${n.col[1]},${n.col[2]},${n.a*1.6})`);
+      g.addColorStop(0.4,`rgba(${n.col[0]},${n.col[1]},${n.col[2]},${n.a})`);
+      g.addColorStop(1,`rgba(${n.col[0]},${n.col[1]},${n.col[2]},0)`);
+      ctx.scale(1,n.ry/n.rx);
+      ctx.beginPath();
+      ctx.arc(0,0,n.rx,0,Math.PI*2);
+      ctx.fillStyle=g;
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // Dust clouds
+    dustClouds.forEach(d=>{
+      ctx.save();
+      ctx.translate(d.x,d.y);
+      ctx.rotate(d.rot);
+      const g=ctx.createRadialGradient(0,0,0,0,0,Math.max(d.rx,d.ry));
+      g.addColorStop(0,`rgba(0,0,5,${d.a})`);
+      g.addColorStop(1,'rgba(0,0,5,0)');
+      ctx.scale(1,d.ry/d.rx);
+      ctx.beginPath();
+      ctx.arc(0,0,d.rx,0,Math.PI*2);
+      ctx.fillStyle=g;
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // Stars
+    const t=performance.now()/1000;
+    stars.forEach(s=>{
+      const alpha=s.a*(0.7+0.3*Math.sin(t*s.tw*100+s.tp));
+      if(s.glow){
+        const g=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*5);
+        g.addColorStop(0,s.color.replace('hsl','hsla').replace(')',`,${alpha})`));
+        g.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.beginPath();ctx.arc(s.x,s.y,s.r*5,0,Math.PI*2);
+        ctx.fillStyle=g;ctx.fill();
+      }
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=s.color.includes('hsl')?s.color.replace('hsl','hsla').replace(')',`,${alpha})`):
+        `rgba(255,255,255,${alpha})`;
+      ctx.fill();
+    });
+  }
+
+  function animate(){
+    // Move stars (parallax drift rightward + slight vertical sway)
+    const t=performance.now()/1000;
+    stars.forEach(s=>{
+      s.x+=s.sp;
+      s.y+=Math.sin(t*0.3+s.tp)*0.015*s.sp*10;
+      if(s.x>W+5) s.x=-5;
+      if(s.x<-5) s.x=W+5;
+    });
+    // Move nebulae (slow drift)
+    nebulae.forEach(n=>{
+      n.x+=n.sp;
+      n.y+=n.dy;
+      if(n.x-n.rx>W+50) n.x=-n.rx-50;
+      if(n.x+n.rx<-50) n.x=W+n.rx+50;
+      if(n.y-n.ry>H+50) n.y=-n.ry-50;
+      if(n.y+n.ry<-50) n.y=H+n.ry+50;
+    });
+    // Move dust clouds
+    dustClouds.forEach(d=>{
+      d.x+=d.sp;
+      d.y+=d.dy;
+      if(d.x-d.rx>W+50) d.x=-d.rx-50;
+      if(d.x+d.rx<-50) d.x=W+d.rx+50;
+      if(d.y-d.ry>H+50) d.y=-d.ry-50;
+      if(d.y+d.ry<-50) d.y=H+d.ry+50;
+    });
+    draw();
+    requestAnimationFrame(animate);
+  }
+
+  window.addEventListener('resize',resize);
+  resize();
+  animate();
+})();
+</script>
 <header>
   <div class="logo">regolark</div>
   <nav>
-    <a href="https://www.ragnarokx.net/" target="_blank">ROX Global</a>
+    <a href="https://www.ragnarokx.net/" target="_blank">ROX NA</a>
+    <a href="https://play.google.com/store/apps/details?id=global.eu.thedream.and.rox" target="_blank">ROX EU</a>
     <a href="https://www.ragnarokx.com/main" target="_blank">ROX SEA</a>
     <a href="https://play.google.com/store/apps/details?id=com.gravityus.romgzeny.aos&pcampaignid=web_share" target="_blank">ROMC Global</a>
     <a href="https://classic.ragnaroketernallove.com/" target="_blank">ROMC SEA</a>
